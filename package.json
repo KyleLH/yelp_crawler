@@ -1,0 +1,26 @@
+{
+  "author": "",
+  "name": "yelp_crawler",
+  "version": "0.0.0",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/kylelh/yelp_crawler.git"
+  },
+  "scripts": {
+    "test": "node crawler.js"
+  },
+  "dependencies": {
+    "yelp": "~0.1.1"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  },
+  "bugs": {
+    "url": "https://github.com/kylelh/yelp_crawler/issues"
+  },
+  "description": "ERROR: No README data found!",
+  "main": "crawler.js",
+  "license": "BSD-2-Clause"
+}
