@@ -6,10 +6,28 @@ var keys = {
 };
 
 
-var yelp = require('yelp').createClient(keys);
+var yelp = require('yelp').createClient(keys),
+    async = require('async');
 
-yelp.search({term: 'hair', location: 'Boston'}, function (e, data) {
-   console.log(e);
-   console.log(data);
-   console.log(data['businesses'].length);
-});
+var res_len = 0;
+
+async.series([
+   function () {
+      yelp.search({term: 'hair', location: 'Boston'}, function (e, data) {
+         console.log(e);
+         console.log(data);
+         console.dir(
+         res_len = data['businesses'].length
+      });
+   },
+   function () {
+      for ( var i = 20; i <= res_len; i += 20) {
+         console.dir("Recieving at offset " + i);
+         yelp.search({term: 'hair', location: 'Boston', offset: i}, function (e, data) {
+            console.log(e);
+            console.log(data);
+            console.log(data['businesses'].length);
+         });
+      }
+   }
+]);
