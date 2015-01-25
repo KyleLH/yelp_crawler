@@ -7,7 +7,9 @@ var keys = {
 
 
 var yelp = require('yelp').createClient(keys),
-    async = require('async');
+    async = require('async'),
+    getCost = require('./getCost'),
+    getDIstribution = require('./getDistribution');
 
 var res_len = 0;
 
@@ -16,7 +18,6 @@ async.series([
       yelp.search({term: 'hair', location: 'Boston'}, function (e, data) {
          console.log(e);
          console.log(data);
-         console.dir(
          res_len = data['businesses'].length
       });
    },
