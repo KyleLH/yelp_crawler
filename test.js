@@ -1,6 +1,9 @@
+var keys = require('./keys')
+
 var	async = require("async"),
 	getCost = require("./getCost"),
-	getDistribution = require("./getDistribution")
+	getDistribution = require("./getDistribution"),
+	yelp = require('yelp').createClient(keys);
 
 
 function getFLCost(callback) {
@@ -17,7 +20,18 @@ function getFLDistribution(callback) {
 	});
 }
 
+function apiTest (callback) {
+	yelp.search({term: 'hair', location: 'Boston'}, function (e, data) {
+		if (e)
+			console.log(e);
+		console.log(data);
+		res_len = data['businesses'].length;
+		callback();
+	});
+}
+
 async.series([
 		getFLCost,
 		getFLDistribution
+		//apiTest
 	]);

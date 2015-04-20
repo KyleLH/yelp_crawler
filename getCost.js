@@ -13,7 +13,7 @@ module.exports = function getCost (business, callback) {
                 matches.push (match[1]);
             }
 
-            callback (matches);
+            callback (matches[0]);
         }
     )
 }
