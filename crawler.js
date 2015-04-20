@@ -96,29 +96,9 @@ function save(callback) {
 }
 
 async.series([
-<<<<<<< HEAD
     getYelp,
     getDist,
     getC,
     getM,
     save
-=======
-   function () {
-      yelp.search({term: 'hair', location: 'Boston'}, function (e, data) {
-         console.log(e);
-         console.log(data);
-         res_len = data['businesses'].length
-      });
-   },
-   function () {
-      for ( var i = 20; i <= res_len; i += 20) {
-         console.dir("Recieving at offset " + i);
-         yelp.search({term: 'hair', location: 'Boston', offset: i}, function (e, data) {
-            console.log(e);
-            console.log(data);
-            console.log(data['businesses'].length);
-         });
-      }
-   }
->>>>>>> 3416f42a884f2025d8ee10f77506a2742ff36e7f
 ]);
