@@ -12,8 +12,11 @@ module.exports = function getDistribution (business, callback){
             while ( match = pattern.exec(res) ){
                 matches.push (match[1]);
             }
-
-            callback (matches);
+            matches.reverse();
+            if (matches)
+                callback (matches);
+            else
+                callback();
         }
     );
 }

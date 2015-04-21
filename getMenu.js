@@ -1,6 +1,5 @@
-var request = require('request');
 module.exports = function (business, callback) {
-
+	var request = require('request');
 	request(
         "http://www.yelp.com/menu/" + business,
         function (err, res) {

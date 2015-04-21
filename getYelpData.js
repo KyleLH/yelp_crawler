@@ -13,9 +13,9 @@ module.exports = function (search, zip, final) {
 			yelp.search({term: search, location: zip}, function (e, data) {
 				if (e)
 					console.log(e);
+				total_count = data.total;
 				local = data;
 				local.businesses = [];
-				total_count = data.total;
 				callback();
 			});
 		},
