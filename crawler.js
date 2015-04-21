@@ -6,6 +6,19 @@ var getYelpData = require('./getYelpData'),
 
 var res_len = 0;
 
+try {
+    mongoose.connect('mongodb://localhost/yelp_crawler');
+} catch (err) {
+    console.log('Could not connect to MongoDB server.\n');
+    console.log(err);
+}
+
+var Salon = mongoose.model('Salon', {_id: String, location: Object,
+                                    rating: Number, price: Number,
+                                    keywords: Object, num_reviewers: Number,
+                                    distribution: Object, menu: Object })
+
+
 // storing values
 var location = {
         'street': '',
@@ -22,11 +35,12 @@ var location = {
 
 
 
-var cur_biz = 'fine-lines-hair-salon-newton-u-f';
+var cur_biz = '',
+    cur_zip = 0;
 
 function getYelp (callback) {
     console.log("Fetching businesses...");
-    getYelpData('hair', '02067', function (e, data) {
+    getYelpData('hair', cur_zip, function (e, data) {
         // here you iterate
         businesses = data.businesses
         location.street = businesses[0].location.display_address.join();
@@ -94,11 +108,12 @@ function save(callback) {
     console.log();
     console.log("Done!");
 }
-
-async.series([
-    getYelp,
-    getDist,
-    getC,
-    getM,
-    save
-]);
+for (i in file) {
+    async.series([
+        getYelp,
+        getDist,
+        getC,
+        getM,
+        save
+    ]);
+}
