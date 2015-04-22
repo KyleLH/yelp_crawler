@@ -7,8 +7,12 @@ module.exports = function getDistribution (business, callback){
             try {
                 res = JSON.parse(res.body).body;
             } catch (err) {
-                callback();
-                return;
+                if (err.message == "Unexpected token <"){
+                    res = res.body;
+                } else {
+                    setImmediate(callback);
+                    return;
+                }
             }
 
             var pattern = /text\-[^\"]+\"\>(\d+)/g;
@@ -21,14 +25,15 @@ module.exports = function getDistribution (business, callback){
             matches.reverse();
             final = {}
             for (var i=1; i <= matches.length; i++) {
-                final[i] = matches[i-1]
+                final[i] = matches[i-1];
             }
             if (final)
                 setImmediate(function () {
                     callback (final);
                 })
-            else
+            else{
                 setImmediate(callback);
+            }
         }
     );
 }

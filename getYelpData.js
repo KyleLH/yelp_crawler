@@ -22,30 +22,39 @@ module.exports = function (search, zip, final) {
 		},
 
 		function (callback) {
-			async.timesSeries(Math.ceil(total_count/40), function (n, next) {
+			async.times(Math.ceil(total_count/40), function (n, next) {
 				var offset = n * 40;
 				if (offset > 1000) {
 					setImmediate(callback);
 					return
 				} else {
 					yelp.search({term: search, location: zip, offset: offset}, function (e, data) {
-						if (e)
+						console.log(data.total);
+						if (e) {
 							console.log(e);
-
-						local.businesses = local.businesses.concat(data.businesses);
-
-						next();
-						if (offset+40 >= total_count) {
-							setImmediate(callback);
 						}
+
+						// local.businesses = local.businesses.concat(data.businesses);
+
+						setImmediate(function () {
+							next(null, data.businesses);
+						});
 					});
 				}
+			},
+			function (err, results) {
+				console.log(results);
+				for (var i = 0; i < results.length; i++) {
+					local.businesses = local.businesses.concat(results[i]);
+				}
+				final(local);
 			});
-		},
-
-		function (callback) {
-			final(local);
-			setImmediate(callback);
 		}
 	]);
 }
+
+
+module.exports("hair", "02067", function (data) {
+	//console.log(data);
+	console.log("Done");
+})
