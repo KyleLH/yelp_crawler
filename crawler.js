@@ -3,7 +3,8 @@ var getYelpData = require('./getYelpData'),
     getDistribution = require('./getDistribution'),
     getCost = require('./getCost'),
     getMenu = require('./getMenu'),
-    mongoose = require('mongoose');
+    mongoose = require('mongoose'),
+    csv = require('fast-csv');
 
 try {
     mongoose.connect('mongodb://localhost/yelp_crawler');
@@ -17,20 +18,6 @@ var Business = mongoose.model('Business', {_id: String, location: Object,
                                     keywords: Object, num_reviewers: Number,
                                     distribution: Object, menu: Object });
 
-
-// storing values
-var location = {
-        'street': '',
-        'city': '',
-        'state': '',
-        'zip': ''
-    },
-    rating = 0.0,
-    price = 0,
-    keywords = '',
-    num_reviewers = 0,
-    distribution = [0,0,0,0,0],
-    menu = [];
 
 function getDist(callback) {
     getDistribution(cur_biz, function (data) {
@@ -60,17 +47,15 @@ function getM(callback) {
         });
     });
 }
+var count = 0;
 
-
-function getYelp (cur_zip) {
+function getYelp (cur_zip, callback) {
     var final = {};
     console.log("Connecting to Yelp...");
     getYelpData('hair', cur_zip, function (data) {
         //iterate here over data
-        console.log("Fetching "+data.total+" entries...");
         businesses = data.businesses;
         async.times(data.total, function (n, next) {
-
                 if (businesses[n]) {
 
                     cur_biz= businesses[n].id;
@@ -122,26 +107,47 @@ function getYelp (cur_zip) {
                                 final[cur_biz]["menu"] = results[2];
                                 final[cur_biz]._id = cur_biz;
                                 var to_save = new Business(final[cur_biz]);
-
                                 Business.update({_id: cur_biz}, to_save.toObject(), {upsert: true}, function (err) {
                                     if (err) {
                                         console.log(err);
                                     } else {
-                                        //console.log("saved "+cur_biz);
+                                        console.log("saved "+n);
                                     }
-                                    setImmediate(next);
+                                    next();
                                 });
                             }
                         );
                     })(cur_biz);
 
-                } // endif
+                } else {
+                    next();
+                }
             },
             function (err, results) {
-                mongoose.connection.close();
+                console.log("Finished "+cur_zip);
+                setImmediate(callback);
             }
         ); // endof [async.times]
     }); // endof [getYelpData]
 } // endof [getYelp]
 
-getYelp("02067");
+
+var zips = [],
+    seen = {};
+console.log("Reading zips...");
+csv
+.fromPath ("zbp12totals.csv", {headers: true})
+.on ('data', function (data) {
+    if (seen[data.name] != 1) {
+        zips.push(data.zip);
+    }
+    seen[data.name] = 1;
+})
+.on ('end', function () {
+    async.eachSeries(zips, function (item, callback) {
+        getYelp(item, callback);
+    }, function () {
+        console.log("All doen")
+        mongoose.connection.close();
+    });
+});
