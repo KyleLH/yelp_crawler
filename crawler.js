@@ -31,99 +31,103 @@ var location = {
     },
     rating = 0.0,
     price = 0,
-    keywords = [],
+    keywords = '',
     num_reviewers = 0,
     distribution = [0,0,0,0,0],
     menu = [];
 
 
 
-var cur_biz = '',
-    cur_zip = "83201"; // idaho?
-
-var final = {};
-
-function getYelp () {
+function getYelp (cur_zip) {
     console.log("Fetching businesses...");
+    var final = {};
     getYelpData('hair', cur_zip, function (data) {
         //iterate here over data
         console.log("Fetching "+data.total+" entries...");
         businesses = data.businesses;
-        async.timesSeries(data.total, function (n, next) {
-            console.log("Finished fetching data");
-            if (n >= data.total-1)
-                console.log(final);
-            async.series([
-                    function (callback) {
-                        cur_biz= businesses[n].id;
-                        console.log("new business: " + cur_biz);
-                        if (businesses[n].location) {
-                            location.street = businesses[n].location.display_address.join();
-                            location.city = businesses[n].location.city;
-                            location.state = businesses[n].location.state_code;
-                            location.zip = businesses[n].location.postal_code;
+        async.times(data.total, function (n, next) {
+            if (businesses[n]) {
+                cur_biz= businesses[n].id;
+                console.log("new business: " + cur_biz);
+                var temp_location = {},
+                    temp_rating = 0,
+                    temp_keywords = "",
+                    temp_num_reviewers = 0;
+                if (businesses[n].location) {
+                    temp_location.street = businesses[n].location.display_address.join();
+                    temp_location.city = businesses[n].location.city;
+                    temp_location.state = businesses[n].location.state_code;
+                    temp_location.zip = businesses[n].location.postal_code;
+                }
+                if (businesses[n].rating)
+                    temp_rating = businesses[n].rating;
+                if (businesses[n].categories) {
+                    for (var i = 0; i < businesses[n].categories.length; i++) {
+                        businesses[n].categories[i] = businesses[n].categories[i][0];
+                    }
+                    temp_keywords = businesses[n].categories.join(separator = '; ');
+                }
+                if (businesses[n].review_count)
+                    temp_num_reviewers = businesses[n].review_count;
+                final[cur_biz] = {
+                    "location": temp_location,
+                    "rating": temp_rating,
+                    "keywords": temp_keywords,
+                    "num_reviewers": temp_num_reviewers
+                }
+
+                function getDist(callback) {
+                    getDistribution(cur_biz, function (data) {
+                        distribution = data;
+                        final[cur_biz]["distribution"] = data;
+                        setImmediate(function () {
+                            callback(null, data);
+                        });
+                    })
+                }
+
+                function getC(callback) {
+                    getCost(cur_biz, function (data) {
+                        if (data) {
+                            price = data.length;
+                        } else {
+                            price = 0;
                         }
-                        if (businesses[n].rating)
-                            rating = businesses[n].rating;
-                        if (businesses.categories)
-                            keywords = businesses[n].categories.join(separator = '; ');
-                        if (businesses[n].review_count)
-                            num_reviewers = businesses[n].review_count;
-                        final[cur_biz] = {
-                            "location": location,
-                            "rating": rating,
-                            "keywords": keywords,
-                            "num_reviewers": num_reviewers
-                        }
-                        callback();
-                    },
+                        final[cur_biz]["price"] = price;
+                        setImmediate(function () {
+                            callback(null, data.length);
+                        });
+                    });
+                }
+
+                function getM(callback) {
+                    getMenu(cur_biz, function (data) {
+                        final[cur_biz]["menu"] = data.join('; ');
+                        menu = data.join('; ');
+                        setImmediate(function () {
+                            callback(null, data.join('; '));
+                        });
+                    });
+                }
+
+                async.series([
                     getDist,
                     getC,
                     getM,
-                    save,
-                    function () {
-                        next();
+                    function (callback) {
+                        setImmediate(next);
+                        if (n >= data.total-1) {
+                            console.log(final);
+                            console.log("Done");
+                        }
                     }
-                ]
-            ); // endof [async.series]
-
-        }); // endof [async.timesSeries]
+                ]);
+            }
+        }); // endof [async.times]
     }); // endof [getYelpData]
 } // endof [getYelp]
 
-function getDist(callback) {
-    console.log("Scraping distribution...");
-    getDistribution(cur_biz, function (data) {
-        distribution = data;
-        final[cur_biz]["distribution"] = data;
-        callback();
-    })
-}
-
-function getC(callback) {
-    console.log("Scraping price...");
-    getCost(cur_biz, function (data) {
-        if (data) {
-            price = data.length;
-        } else {
-            price = 0;
-        }
-        final[cur_biz]["price"] = price;
-        callback();
-    })
-}
-
-function getM(callback) {
-    console.log("Scraping menu...");
-    getMenu(cur_biz, function (data) {
-        final[cur_biz]["menu"] = data.join('; ');
-        menu = data.join('; ');
-        callback();
-    })
-}
-
-function save(callback) {
-    console.log("Finished fetching data.");
+function save(callback, results) {
     /*
     console.log("\nResults:\n");
     console.log("Location:")
@@ -150,7 +154,6 @@ function save(callback) {
     console.log("Storing Data...");
     console.log();
     */
-    console.log("Done!");
-    callback();
+    setImmediate(callback);
 }
-getYelp();
+getYelp("02067");
