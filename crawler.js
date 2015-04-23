@@ -92,7 +92,7 @@ function getYelp (cur_zip, callback) {
                         temp_num_reviewers = businesses[n].review_count;
                     }
 
-                    final[cur_biz] = {
+                    final = {
                         "location": temp_location,
                         "rating": temp_rating,
                         "keywords": temp_keywords,
@@ -106,11 +106,11 @@ function getYelp (cur_zip, callback) {
                                 getM
                             ],
                             function (err, results) {
-                                final[cur_biz]["distribution"] = results[0];
-                                final[cur_biz]["price"] = results[1];
-                                final[cur_biz]["menu"] = results[2];
-                                final[cur_biz]._id = cur_biz;
-                                var to_save = new Business(final[cur_biz]);
+                                final["distribution"] = results[0];
+                                final["price"] = results[1];
+                                final["menu"] = results[2];
+                                final._id = cur_biz;
+                                var to_save = new Business(final);
                                 Business.update({_id: cur_biz}, to_save.toObject(), {upsert: true}, function (err) {
                                     if (err) {
                                         console.log(err);
