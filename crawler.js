@@ -43,19 +43,23 @@ function getC(callback) {
 function getM(callback) {
     getMenu(cur_biz, function (data) {
         setImmediate(function () {
-            callback(null, data.join('; '));
+            try {
+                callback(null, data.join('; '));
+            } catch (err) {
+                callback(null, '');
+            }
         });
     });
 }
 var count = 0;
 
 function getYelp (cur_zip, callback) {
-    var final = {};
     console.log("Connecting to Yelp...");
     getYelpData('hair', cur_zip, function (data) {
         //iterate here over data
         businesses = data.businesses;
         async.times(data.total, function (n, next) {
+		var final = {};
                 if (businesses[n]) {
 
                     cur_biz= businesses[n].id;
