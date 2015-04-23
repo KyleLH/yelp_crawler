@@ -7,12 +7,8 @@ module.exports = function getDistribution (business, callback){
             try {
                 res = JSON.parse(res.body).body;
             } catch (err) {
-                if (err.message == "Unexpected token <"){
-                    res = res.body;
-                } else {
-                    setImmediate(callback);
-                    return;
-                }
+                console.log("http://www.yelp.com/biz/" + business + "/ratings_histogram/");
+                throw "Unable to get Distribution";
             }
 
             var pattern = /text\-[^\"]+\"\>(\d+)/g;
@@ -27,6 +23,7 @@ module.exports = function getDistribution (business, callback){
             for (var i=1; i <= matches.length; i++) {
                 final[i] = matches[i-1];
             }
+
             if (final)
                 setImmediate(function () {
                     callback (final);

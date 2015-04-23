@@ -3,12 +3,7 @@ module.exports = function getCost (business, callback) {
     request(
         "http://www.yelp.com/biz/" + business,
         function (err, res) {
-            try {
-                res = res.body;
-            } catch (err) {
-                callback(null);
-                return;
-            }
+            res = res.body;
 
             var pattern = /priceRange\">(.+)<\/span>/g;
             var match;

@@ -55,11 +55,12 @@ var count = 0;
 
 function getYelp (cur_zip, callback) {
     console.log("Connecting to Yelp...");
-    getYelpData('hair', cur_zip, function (data) {
+    getYelpData('hair', cur_zip, function (err, data) {
+        console.log("Fetched "+data.length+" entries");
         //iterate here over data
-        businesses = data.businesses;
-        async.times(data.total, function (n, next) {
-		var final = {};
+        businesses = data;
+        async.times(data.length, function (n, next) {
+        		var final = {};
                 if (businesses[n]) {
 
                     cur_biz= businesses[n].id;
@@ -115,7 +116,7 @@ function getYelp (cur_zip, callback) {
                                     if (err) {
                                         console.log(err);
                                     } else {
-                                        console.log("saved "+n);
+                                        //console.log("saved "+n);
                                     }
                                     next();
                                 });
