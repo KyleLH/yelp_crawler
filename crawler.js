@@ -216,7 +216,11 @@ function asyncData() {
                         data["distribution"] = results[0];
                         data["price"] = results[1];
                         data["menu"] = results[2];
-                        data["scraped"] = true;
+                        if (results[0] == 0){
+                            data["scraped"] = false;
+                        } else {
+                            data["scraped"] = true;
+			}
                         Business.update({_id: cur_biz}, data.toObject(), function (err) {
                             console.log("Saved "+cur_biz);
                             finished(null);

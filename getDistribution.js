@@ -19,7 +19,8 @@ module.exports = function getDistribution (business, callback){
                             console.log(res);
                             throw "Unable to get Distribution";
                         } else if (matches[0] == "400 Bad request") {
-                            throw "Unable to contact Yelp";
+                            callback (null, 0);
+                            return;
                         }
                     }
                 } else {
