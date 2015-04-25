@@ -7,8 +7,25 @@ module.exports = function getDistribution (business, callback){
             try {
                 res = JSON.parse(res.body).body;
             } catch (err) {
-                console.log("http://www.yelp.com/biz/" + business + "/ratings_histogram/");
-                throw "Unable to get Distribution";
+                //console.log("http://www.yelp.com/biz/" + business + "/ratings_histogram/");
+                res = res.body;
+                var pattern = /(Error 404)/g;
+                var matches = [];
+                matches = res.match(pattern);
+                if ( matches == null || matches.length === 0) {
+                    console.log(res);
+                    throw "Unable to get Distribution";
+                } else {
+                    pattern = /(400 Bad request)/g;
+                    matches = []
+                    matches = res.match(pattern)
+                    if ( matches == null || matches.length === 0) {
+                        callback (null, {'1': '0', '2': '0', '3': '0' ,'4': '0' ,'5': '0'});
+                        return;
+                    } else {
+                        throw "Unable to contact Yelp";
+                    }
+                }
             }
 
             var pattern = /text\-[^\"]+\"\>(\d+)/g;
@@ -24,11 +41,11 @@ module.exports = function getDistribution (business, callback){
                 final[i] = matches[i-1];
             }
 
-            if (final)
+            if (final) {
                 setImmediate(function () {
-                    callback (final);
-                })
-            else{
+                    callback (null, final);
+                });
+            } else {
                 setImmediate(callback);
             }
         }
