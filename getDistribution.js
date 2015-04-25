@@ -9,22 +9,22 @@ module.exports = function getDistribution (business, callback){
             } catch (err) {
                 //console.log("http://www.yelp.com/biz/" + business + "/ratings_histogram/");
                 res = res.body;
-                var pattern = /(Error 404)/g;
+                var pattern = /(Error 404|400 Bad request)/g;
                 var matches = [];
                 matches = res.match(pattern);
-                if ( matches == null || matches.length === 0) {
-                    console.log(res);
-                    throw "Unable to get Distribution";
-                } else {
-                    pattern = /(400 Bad request)/g;
-                    matches = []
-                    matches = res.match(pattern)
-                    if ( matches == null || matches.length === 0) {
-                        callback (null, {'1': '0', '2': '0', '3': '0' ,'4': '0' ,'5': '0'});
-                        return;
-                    } else {
-                        throw "Unable to contact Yelp";
+
+                if (matches) {
+                    if (matches.length > 0) {
+                        if (matches[0] == "Error 404") {
+                            console.log(res);
+                            throw "Unable to get Distribution";
+                        } else if (matches[0] == "400 Bad request") {
+                            throw "Unable to contact Yelp";
+                        }
                     }
+                } else {
+                    callback (null, {'1': '0', '2': '0', '3': '0' ,'4': '0' ,'5': '0'});
+                    return;
                 }
             }
 
