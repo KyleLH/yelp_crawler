@@ -1,0 +1,7 @@
+location
+rating
+price
+keywords
+num_reviewers
+distribution
+menu

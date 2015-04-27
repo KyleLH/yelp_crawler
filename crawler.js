@@ -186,15 +186,16 @@ function asyncData() {
         for (i in data) {
             business_names.push(data[i]._id);
         }
+        var counter = 0;
 
-        async.eachLimit(business_names, 10, function (cur_biz, finished){
-            console.log("Fetching data for "+cur_biz);
+        async.eachLimit(business_names, 1000, function (cur_biz, finished){
             async.parallel([
+                    /*
                     function (done) {
                         getDistribution(cur_biz, function (err, data) {
                             done(null, data);
                         });
-                    },
+                    },*/
                     function (done) {
                         getMenu(cur_biz, function (err, data) {
                             done(null, data);
@@ -207,22 +208,23 @@ function asyncData() {
                     }
                 ],
                 function (err, results) {
-                    console.log("Updating "+cur_biz);
+                    counter++;
+                    if (counter % 500 == 0) {
+                        console.log("Processed "+counter+" businesses");
+                    }
                     Business.find({_id: cur_biz}, function (err, data) {
                         if (err) throw err;
                         if (data.length > 1) throw "Duplicate business";
 
                         data = data[0];
-                        data["distribution"] = results[0];
                         data["price"] = results[1];
-                        data["menu"] = results[2];
+                        data["menu"] = results[0];
                         if (results[0] == 0){
                             data["scraped"] = false;
                         } else {
                             data["scraped"] = true;
 			}
                         Business.update({_id: cur_biz}, data.toObject(), function (err) {
-                            console.log("Saved "+cur_biz);
                             finished(null);
                         });
                     });
@@ -236,5 +238,98 @@ function asyncData() {
     });
 }
 
+var keys = require('./keys');
+var yelp = require('yelp').createClient(keys);
 
-asyncData();
+/*
+yelp.business('fine-lines-hair-salon-newton-u-f',  function (err, data) {
+    if( err ){throw err; }
+    console.log(data);
+});
+*/
+
+function getAddresses() {
+    Business.find({}, function (err, data) {
+        if (err) console.log(err);
+        var counter = 0;
+        console.log("Processing "+data.length+" businesses")
+        async.eachLimit(data, 100, function (item, done) {
+            yelp.business(item._id, function (err, loc) {
+                if (err) {
+                    done();
+                } else {
+                    item.location = loc.location.display_address.join(', ');
+                    var to_save = new Business(item);
+                    Business.update({_id: item._id}, to_save.toObject(), function (err) {
+                        counter++;
+                        if (counter % 5000 == 0) {
+                            console.log(counter+" businesses processed");
+                        }
+                        done();
+                    });
+                }
+            });
+        },
+        function (err) {
+            console.log("done");
+        });
+    })
+}
+
+function updateDistribution() {
+    Business.find({}, function (err, data) {
+        if (err) console.log(err);
+        var counter = 0;
+        console.log("Processing "+data.length+" businesses")
+        async.eachLimit(data, 100, function (item, done) {
+            if (err) {
+                done();
+            } else {
+                var tmp = [];
+                for (key in item.distribution) {
+                    tmp.push(item.distribution[key]);
+                }
+                item.distribution = tmp.join(';');
+                var to_save = new Business(item);
+                Business.update({_id: item._id}, to_save.toObject(), function (err) {
+                    counter++;
+                    if (counter % 5000 == 0) {
+                        console.log(counter+" businesses processed");
+                    }
+                    done();
+                });
+            }
+        },
+        function (err) {
+            console.log("done");
+            mongoose.connection.close();
+        });
+    })
+}
+updateDistribution();
+
+function fixes() {
+    Business.find({distribution: '1;2;3;4;5'}, function (err, data) {
+        if (err) console.log(err);
+        console.log("Processing "+data.length+" businesses")
+        var counter = 0;
+        async.eachLimit(data, 100, function (item, done) {
+            if (item.distribution == '1;2;3;4;5') {
+                getDistribution(item._id, function (err, data) {
+                    item.distribution = data;
+                    Business.update({_id: item._id}, item.toObject(), function (err) {
+                        counter++;
+                        if (counter % 1000 == 0) {
+                            console.log(counter+" businesses processed");
+                        }
+                        done();
+                    });
+                });
+            }
+        },
+        function (err) {
+            console.log("done");
+            mongoose.connection.close();
+        });
+    })
+}

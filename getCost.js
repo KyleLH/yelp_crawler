@@ -1,4 +1,4 @@
-module.exports = function getCost (business, callback) {
+module.exports = function (business, callback) {
     var request = require("request")
     request(
         "http://www.yelp.com/biz/" + business,
@@ -12,7 +12,11 @@ module.exports = function getCost (business, callback) {
             while ( match = pattern.exec(res) ){
                 matches.push (match[1]);
             }
-            callback (matches[0]);
+            if (matches.length != 0) {
+                callback (null, matches[0].length);
+            } else {
+                callback (null, 0)
+            }
         }
     )
 }

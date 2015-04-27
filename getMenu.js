@@ -14,8 +14,8 @@ module.exports = function (business, callback) {
             while ( match = pattern.exec(res) ){
                 matches.push (match[1]);
             }
-
-            callback (matches);
+			matches = matches.join('; ');
+            callback (null, matches);
         }
     )
 
