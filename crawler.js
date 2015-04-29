@@ -180,56 +180,34 @@ function zipData() {
 function asyncData() {
     var business_names = [];
     console.log("Fetching businesses");
-    Business.find({'scraped': {'$exists': false}}, '_id', function (err, data) {
+    Business.find({scraped: false}, '_id', function (err, data) {
         console.log("Fetched "+data.length+" businesses");
         console.log("Compiling businesses");
         for (i in data) {
             business_names.push(data[i]._id);
         }
-        var counter = 0;
+        var counter = 0
 
-        async.eachLimit(business_names, 1000, function (cur_biz, finished){
-            async.parallel([
-                    /*
-                    function (done) {
-                        getDistribution(cur_biz, function (err, data) {
-                            done(null, data);
-                        });
-                    },*/
-                    function (done) {
-                        getMenu(cur_biz, function (err, data) {
-                            done(null, data);
-                        });
-                    },
-                    function (done) {
-                        getCost(cur_biz, function (err, data) {
-                            done(null, data);
-                        });
-                    }
-                ],
-                function (err, results) {
-                    counter++;
-                    if (counter % 500 == 0) {
-                        console.log("Processed "+counter+" businesses");
-                    }
-                    Business.find({_id: cur_biz}, function (err, data) {
-                        if (err) throw err;
-                        if (data.length > 1) throw "Duplicate business";
-
-                        data = data[0];
-                        data["price"] = results[1];
-                        data["menu"] = results[0];
-                        if (results[0] == 0){
-                            data["scraped"] = false;
-                        } else {
-                            data["scraped"] = true;
-			}
-                        Business.update({_id: cur_biz}, data.toObject(), function (err) {
-                            finished(null);
-                        });
-                    });
+        async.eachSeries(business_names, function (cur_biz, finished){
+            getDistribution(cur_biz, function (err, dist) {
+                counter++;
+                if (counter % 500 == 0) {
+                    console.log("Processed "+counter+" businesses");
                 }
-            );
+                Business.find({_id: cur_biz}, function (err, data) {
+                    if (err) throw err;
+                    if (data.length > 1) throw "Duplicate business";
+
+                    data = data[0];
+                    //data["price"] = results[2];
+                    //data["menu"] = results[1];
+                    data.distribution = dist;
+                    data["scraped"] = true;
+                    Business.update({_id: cur_biz}, data.toObject(), function (err) {
+                        finished();
+                    });
+                });
+            });
         },
         function (err) {
             console.log("Finished updating "+business_names.length+" businesses");
@@ -237,6 +215,8 @@ function asyncData() {
         });
     });
 }
+asyncData();
+
 
 var keys = require('./keys');
 var yelp = require('yelp').createClient(keys);
@@ -258,7 +238,8 @@ function getAddresses() {
                 if (err) {
                     done();
                 } else {
-                    item.location = loc.location.display_address.join(', ');
+                    item.num_reviewers = loc.num_reviewers;
+                    item.rating = loc.rating;
                     var to_save = new Business(item);
                     Business.update({_id: item._id}, to_save.toObject(), function (err) {
                         counter++;
@@ -306,10 +287,10 @@ function updateDistribution() {
         });
     })
 }
-updateDistribution();
+//updateDistribution();
 
 function fixes() {
-    Business.find({distribution: '1;2;3;4;5'}, function (err, data) {
+    Business.find({}, function (err, data) {
         if (err) console.log(err);
         console.log("Processing "+data.length+" businesses")
         var counter = 0;
@@ -333,3 +314,21 @@ function fixes() {
         });
     })
 }
+
+function test() {
+    Business.find({}, function (err, data) {
+        var counter =0;
+        data.forEach(function (item) {
+            if (eval(item.distribution.replace(/;/g, '+')) != item.num_reviewers) {
+                counter++;
+                //console.log("ERROR ERROR");
+                console.log(eval(item.distribution.replace(/;/g, '+')), item.num_reviewers);
+                console.log(item._id);
+            }
+        });
+        console.log(counter);
+        mongoose.connection.close();
+    });
+}
+
+//test();
